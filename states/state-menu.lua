@@ -97,7 +97,7 @@ mainMenu.onLoad = function ( self )
 	textbox[1]:setAlignment ( MOAITextBox.CENTER_JUSTIFY )
 	textbox[1]:setYFlip ( true )
 	textbox[1]:setRect ( -150, -230, 150, 230 )
-	textbox[1]:setString ( "Wolf Clicker 1.0" )
+	textbox[1]:setString ( "Apex 1.0" )
 	layer:insertProp ( textbox[1] )
 	
 	startButton = elements.makeTextButton ( font, "resources/button.png", 206, 150, 60 )

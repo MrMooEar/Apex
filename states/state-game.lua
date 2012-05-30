@@ -160,11 +160,15 @@ function GrabCard( card, x, y )
 	grabOffsetY = propLocY - y
 	
 	card.prop:seekScl( GRABBED_CARD_SCALE_X, GRABBED_CARD_SCALE_Y, GRABBED_CARD_SCALE_TIME )
+	card.prop:setPriority( 1 )
+	card.textbox:setPriority( 1 )
 end
 
 function ReleaseCard()
 	if grabbedCard then
 		grabbedCard.prop:seekScl( 1.0, 1.0, GRABBED_CARD_SCALE_TIME )
+		grabbedCard.prop:setPriority( 0 )
+		grabbedCard.textbox:setPriority( 0 )
 		grabOffsetX = 0
 		grabOffsetY = 0
 		grabbedCard = nil
@@ -399,6 +403,7 @@ function InitializeDiscardZone()
 	discardProp:setDeck( discardArt )
 	discardProp:setLoc( DISCARD_LOCATION_X, DISCARD_LOCATION_Y )
 	
+	discardProp:setPriority( 0 )
 	mainLayer:insertProp( discardProp )
 	
 	CreateAndAttachTextBox( discardProp )
@@ -414,6 +419,7 @@ function InitializePlayerDeckZone()
 	playerDeckProp:setDeck( playerDeckArt )
 	playerDeckProp:setLoc( PLAYER_DECK_LOCATION_X, PLAYER_DECK_LOCATION_Y )
 	
+	playerDeckProp:setPriority( 0 )
 	mainLayer:insertProp( playerDeckProp )
 	
 	CreateAndAttachTextBox( playerDeckProp )
@@ -429,6 +435,7 @@ function InitializeGlobalDeckZone()
 	globalDeckProp:setDeck( globalDeckArt )
 	globalDeckProp:setLoc( GLOBAL_DECK_LOCATION_X, GLOBAL_DECK_LOCATION_Y )
 
+	globalDeckProp:setPriority( 0 )
 	mainLayer:insertProp( globalDeckProp )
 	
 	CreateAndAttachTextBox( globalDeckProp )
@@ -452,6 +459,7 @@ function CreateAndAttachTextBox( prop )
 	
 	prop.textbox = textbox
 
+	textbox:setPriority( 0 )
 	mainLayer:insertProp( textbox )
 end
 
@@ -465,6 +473,7 @@ function InitializeDeployZone()
 	deployZoneProp:setDeck( deployZoneArt )
 	deployZoneProp:setLoc( DEPLOY_ZONE_LOCATION_X, DEPLOY_ZONE_LOCATION_Y )
 	
+	deployZoneProp:setPriority( 0 )
 	mainLayer:insertProp( deployZoneProp )
 end
 
@@ -502,6 +511,7 @@ function CreateNewCaptureZone( index )
 	local x,y = GetCaptureCardLoc( index )
 	captureZoneProp:setLoc( x, CAPTURE_ZONE_LOCATION_Y )
 	
+	captureZoneProp:setPriority( 0 )
 	mainLayer:insertProp( captureZoneProp )
 	return captureZoneProp
 end
@@ -672,6 +682,10 @@ function CreateCardVisuals( card )
 	textbox:setParent( card.prop )
 		
 	card.textbox = textbox
+
+	-- set priorities for both the card prop and the text box	
+	card.prop:setPriority( 0 )
+	card.textbox:setPriority( 0 )	
 	
 	mainLayer:insertProp( card.prop )
 	mainLayer:insertProp( card.textbox )
