@@ -7,6 +7,12 @@ require "modules/state-manager"
 require "modules/input-manager"	
 require "modules/savefile-manager"
 
+local CardDatabase = require('CardDatabase')
+
+-- global objects
+g_cardDatabase = CardDatabase.new()
+
+
 MOAI_CLOUD_URL = "http://services.moaicloud.com/colond/clouddbtutorial"
 
 MOAISim.openWindow( "APEX", SCREEN_WIDTH, SCREEN_HEIGHT )

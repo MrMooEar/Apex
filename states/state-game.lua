@@ -4,7 +4,7 @@
 -- http://getmoai.com
 --==============================================================
 
-require "CardDatabase"
+local Card = require('Card')
 
 local CARD_TEXTBOX_WIDTH					= 45
 local CARD_TEXTBOX_HEIGHT					= 45
@@ -358,15 +358,17 @@ game.onLoad = function ( self )
 	mainLayer = layer
 	
 	-- create the global deck
-	for i=1, 10 do local card = CardDatabase.CreateCard("Giant") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
-	for i=1, 10 do local card = CardDatabase.CreateCard("Fighter") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
-	for i=1, 10 do local card = CardDatabase.CreateCard("Turtle") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
-	for i=1, 10 do local card = CardDatabase.CreateCard("Warhorse") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
+	--Card.new("Giant")
+	
+	for i=1, 10 do local card = g_cardDatabase:CreateCard("Giant") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
+	for i=1, 10 do local card = g_cardDatabase:CreateCard("Fighter") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
+	for i=1, 10 do local card = g_cardDatabase:CreateCard("Turtle") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
+	for i=1, 10 do local card = g_cardDatabase:CreateCard("Warhorse") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
 	ShuffleDeck(globalDeck)
 	
 	-- create the player deck
-	for i=1, 8 do local card = CardDatabase.CreateCard("Minion") table.insert(playerDeck, card) card.cardArea = CARD_AREA.PLAYER_DECK end
-	for i=1, 2 do local card = CardDatabase.CreateCard("Bear") table.insert(playerDeck, card) card.cardArea = CARD_AREA.PLAYER_DECK end
+	for i=1, 8 do local card = g_cardDatabase:CreateCard("Minion") table.insert(playerDeck, card) card.cardArea = CARD_AREA.PLAYER_DECK end
+	for i=1, 2 do local card = g_cardDatabase:CreateCard("Bear") table.insert(playerDeck, card) card.cardArea = CARD_AREA.PLAYER_DECK end
 	ShuffleDeck(playerDeck)
 
 	InitializeDiscardZone()
@@ -645,7 +647,7 @@ function CreateCardVisuals( card )
 	else
 		print( "Going to get the art for :" .. card.artName )
 	end
-	local cardGfx = CardDatabase.GetCardArt( card.artName )
+	local cardGfx = g_cardDatabase:GetCardArt( card.artName )
 	card.prop:setDeck( cardGfx )
 	
 	-- put a text box on the card
@@ -660,10 +662,10 @@ function CreateCardVisuals( card )
 	--textbox:setAlignment ( MOAITextBox.LEFT_JUSTIFY, MOAITextBox.TOP_JUSTIFY )
 	--textbox:setAlignment ( MOAITextBox.CENTER_JUSTIFY )
 	textbox:setYFlip ( true )
-	local x1 = CardDatabase.CARD_WIDTH*CARD_TEXTBOX_RECT_RATIO_X_1 - (CardDatabase.CARD_WIDTH/2)
-	local y1 = -(CardDatabase.CARD_HEIGHT*CARD_TEXTBOX_RECT_RATIO_Y_1 - (CardDatabase.CARD_HEIGHT/2))
-	local x2 = CardDatabase.CARD_WIDTH*CARD_TEXTBOX_RECT_RATIO_X_2 - (CardDatabase.CARD_WIDTH/2)
-	local y2 = -(CardDatabase.CARD_HEIGHT*CARD_TEXTBOX_RECT_RATIO_Y_2 - (CardDatabase.CARD_HEIGHT/2))
+	local x1 = g_cardDatabase.CARD_WIDTH*CARD_TEXTBOX_RECT_RATIO_X_1 - (g_cardDatabase.CARD_WIDTH/2)
+	local y1 = -(g_cardDatabase.CARD_HEIGHT*CARD_TEXTBOX_RECT_RATIO_Y_1 - (g_cardDatabase.CARD_HEIGHT/2))
+	local x2 = g_cardDatabase.CARD_WIDTH*CARD_TEXTBOX_RECT_RATIO_X_2 - (g_cardDatabase.CARD_WIDTH/2)
+	local y2 = -(g_cardDatabase.CARD_HEIGHT*CARD_TEXTBOX_RECT_RATIO_Y_2 - (g_cardDatabase.CARD_HEIGHT/2))
 	
 	-- HACK
 	y1 = 0
