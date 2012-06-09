@@ -84,29 +84,17 @@ function m.new(...)
 		function Ob:GetCard( cardName )
 			return self.database[ cardName ]
 		end
-
-		function Ob:CreateCard( cardName )
-			
-			cardDBentry = self.database[cardName]
+		
+		function Ob:GetCardDBentry( cardName )
+			local cardDBentry = self.database[cardName]
 			if (cardDBentry == nil ) then
 				print( "INVALID database entry for cardName: " .. cardName )
 				return nil
 			end
-			
-			local card = {}
-			card.artName = cardDBentry.artName
-			card.resourceAmount = cardDBentry.resourceAmount
-			card.resourceCost = cardDBentry.resourceCost
-			card.power = cardDBentry.power
-			card.toughness = cardDBentry.toughness
-			card.drawCards = cardDBentry.drawCards
-			card.cardText = cardDBentry.cardText
-			
-			card.deployedThisTurn = false
-				
-			return card
+
+			return cardDBentry 			
 		end
-	
+
 		-- get the MOAIGfxQuad2D for a particular card
 		-- if we haven't loaded it yet, it will be loaded
 		function Ob:GetCardArt( artName )

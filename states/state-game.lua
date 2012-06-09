@@ -6,13 +6,6 @@
 
 local Card = require('Card')
 
-local CARD_TEXTBOX_WIDTH					= 45
-local CARD_TEXTBOX_HEIGHT					= 45
-local CARD_TEXTBOX_RECT_RATIO_X_1			= 0.1
-local CARD_TEXTBOX_RECT_RATIO_Y_1			= 0.65
-local CARD_TEXTBOX_RECT_RATIO_X_2			= 0.9
-local CARD_TEXTBOX_RECT_RATIO_Y_2			= 0.9
-
 local GRABBED_CARD_SCALE_X					= 1.75
 local GRABBED_CARD_SCALE_Y					= 1.75
 local GRABBED_CARD_SCALE_TIME				= 0.2
@@ -60,8 +53,6 @@ local CAPTURE_ZONE_HEIGHT					= 80
 local CAPTURE_ZONE_ART_PATH					= "resources/CaptureZoneBackground.jpg"
 local CAPTURE_ZONE_CARD_OFFSET_X			= 15
 local CAPTURE_ZONE_CARD_OFFSET_Y			= -30
-
-local CARD_AREA								= { PLAYER_DECK = 0, GLOBAL_DECK = 1, HAND = 2, DISCARD = 3, DEPLOY = 4, CAPTURE = 5, CAPTURE_PRIZE = 6 }
 
 local game = {}
 game.layerTable = nil
@@ -137,16 +128,6 @@ game.ClickCloud = function ()
 end
 
 ----------------------------------------------------------------
-game.CardGrab = function( self )
-	print( 'CardGrab!' )
-	cardGrabbed = not cardGrabbed
-	
-	local x,y = mainLayer:wndToWorld ( inputmgr:getTouch ())
-	local propLocX, propLocY = card.img:getLoc()
-	grabOffsetX = propLocX - x
-	grabOffsetY = propLocY - y
-end
-----------------------------------------------------------------
 game.onFocus = function ( self )
 	
 	MOAIGfxDevice.setClearColor ( 0, 0, 0, 1 )
@@ -155,20 +136,18 @@ end
 function GrabCard( card, x, y )
 	grabbedCard = card
 
-	local propLocX, propLocY = grabbedCard.prop:getLoc()
+	local propLocX, propLocY = grabbedCard:getLoc()
 	grabOffsetX = propLocX - x
 	grabOffsetY = propLocY - y
 	
 	card.prop:seekScl( GRABBED_CARD_SCALE_X, GRABBED_CARD_SCALE_Y, GRABBED_CARD_SCALE_TIME )
-	card.prop:setPriority( 1 )
-	card.textbox:setPriority( 1 )
+	card:setRenderPriority( 1 )
 end
 
 function ReleaseCard()
 	if grabbedCard then
 		grabbedCard.prop:seekScl( 1.0, 1.0, GRABBED_CARD_SCALE_TIME )
-		grabbedCard.prop:setPriority( 0 )
-		grabbedCard.textbox:setPriority( 0 )
+		grabbedCard:setRenderPriority( 0 )
 		grabOffsetX = 0
 		grabOffsetY = 0
 		grabbedCard = nil
@@ -284,11 +263,12 @@ end
 
 --------------------------------------------------
 function ReturnCardToOriginalLoc( card )
-	if card.cardArea == CARD_AREA.HAND then
+	local cardArea = card:getCardArea()
+	if cardArea == Card.CARD_AREA_HAND then
 		SendCardToHandLoc( grabbedCard )
-	elseif card.cardArea == CARD_AREA.DEPLOY then
+	elseif cardArea == Card.CARD_AREA_DEPLOY then
 		SendCardToDeployZoneLoc( grabbedCard )
-	elseif card.cardArea == CARD_AREA.CAPTURE then
+	elseif cardArea == Card.CARD_AREA_CAPTURE then
 		SendCardToCaptureZoneLoc( grabbedCard )
 	end
 end
@@ -358,17 +338,16 @@ game.onLoad = function ( self )
 	mainLayer = layer
 	
 	-- create the global deck
-	--Card.new("Giant")
 	
-	for i=1, 10 do local card = g_cardDatabase:CreateCard("Giant") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
-	for i=1, 10 do local card = g_cardDatabase:CreateCard("Fighter") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
-	for i=1, 10 do local card = g_cardDatabase:CreateCard("Turtle") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
-	for i=1, 10 do local card = g_cardDatabase:CreateCard("Warhorse") table.insert(globalDeck, card) card.cardArea = CARD_AREA.GLOBAL_DECK end
+	for i=1, 10 do local card = Card:new("Giant") 		table.insert(globalDeck, card) card:setCardArea( Card.CARD_AREA_GLOBAL_DECK ) end
+	for i=1, 10 do local card = Card:new("Fighter") 	table.insert(globalDeck, card) card:setCardArea( Card.CARD_AREA_GLOBAL_DECK ) end
+	for i=1, 10 do local card = Card:new("Turtle") 		table.insert(globalDeck, card) card:setCardArea( Card.CARD_AREA_GLOBAL_DECK ) end
+	for i=1, 10 do local card = Card:new("Warhorse") 	table.insert(globalDeck, card) card:setCardArea( Card.CARD_AREA_GLOBAL_DECK ) end
 	ShuffleDeck(globalDeck)
 	
 	-- create the player deck
-	for i=1, 8 do local card = g_cardDatabase:CreateCard("Minion") table.insert(playerDeck, card) card.cardArea = CARD_AREA.PLAYER_DECK end
-	for i=1, 2 do local card = g_cardDatabase:CreateCard("Bear") table.insert(playerDeck, card) card.cardArea = CARD_AREA.PLAYER_DECK end
+	for i=1, 8 do local card = Card:new("Minion") 		table.insert(playerDeck, card) card:setCardArea( Card.CARD_AREA_PLAYER_DECK ) end
+	for i=1, 2 do local card = Card:new("Bear") 		table.insert(playerDeck, card) card:setCardArea( Card.CARD_AREA_PLAYER_DECK ) end
 	ShuffleDeck(playerDeck)
 
 	InitializeDiscardZone()
@@ -381,8 +360,7 @@ game.onLoad = function ( self )
 	
 	-- draw the opening hand cards to start the turn!
 	for i=1, HAND_SIZE do
-		local card = DrawCardFromDeck( playerDeck, hand, 0, discard, PLAYER_DECK_LOCATION_X, PLAYER_DECK_LOCATION_Y )
-		card.cardArea = CARD_AREA.HAND
+		local card = DrawCardFromDeck( playerDeck, hand, 0, discard, Card.CARD_AREA_HAND, PLAYER_DECK_LOCATION_X, PLAYER_DECK_LOCATION_Y )
 	end
 	
 	ArrangeHand()
@@ -489,8 +467,7 @@ end
 ---------------------------------------------
 function DrawNewCaptureCard( captureCardIndex )
 	print("Drawing new Capture Card for index: " .. captureCardIndex )
-	local card = DrawCardFromDeck( globalDeck, captureCards, captureCardIndex, nil, GLOBAL_DECK_LOCATION_X, GLOBAL_DECK_LOCATION_Y )	
-	card.cardArea = CARD_AREA.CAPTURE_PRIZE
+	local card = DrawCardFromDeck( globalDeck, captureCards, captureCardIndex, nil, Card.CARD_AREA_CAPTURE_PRIZE, GLOBAL_DECK_LOCATION_X, GLOBAL_DECK_LOCATION_Y )	
 	local x,y = GetCaptureCardLoc( captureCardIndex )
 	card.prop:seekLoc( x, y, 1, MOAIEaseType.EASE_IN)
 end
@@ -557,10 +534,7 @@ function EndTurn()
 	Yield( 20 )
 	
 	for i=1, HAND_SIZE do
-		local card = DrawCardFromDeck( playerDeck, hand, 0, discard, PLAYER_DECK_LOCATION_X, PLAYER_DECK_LOCATION_Y )
-		if card then
-			card.cardArea = CARD_AREA.HAND
-		end
+		local card = DrawCardFromDeck( playerDeck, hand, 0, discard, Card.CARD_AREA_HAND, PLAYER_DECK_LOCATION_X, PLAYER_DECK_LOCATION_Y )
 	end
 	
 	for k, v in ipairs(deployZone) do
@@ -601,7 +575,7 @@ end
 --discardPile - discard pile that should be shuffled in should we run out of cards
 --deckLocX - location of the deck in world space - this is used for animation of the card
 --deckLocY
-function DrawCardFromDeck( fromDeck, toLocation, toIndex, discardPile, deckLocX, deckLocY )
+function DrawCardFromDeck( fromDeck, toLocation, toIndex, discardPile, newCardArea, deckLocX, deckLocY )
 	print("DRAWING CARD! num cards in deck = " .. #fromDeck)
 	local numCardsInDeck = #fromDeck
 	if numCardsInDeck == 0 then
@@ -616,7 +590,7 @@ function DrawCardFromDeck( fromDeck, toLocation, toIndex, discardPile, deckLocX,
 		end
 		
 		print("Shuffling Discard into Deck!")
-		ShuffleDiscardIntoDeck( fromDeck, discardPile, CARD_AREA.PLAYER_DECK )
+		ShuffleDiscardIntoDeck( fromDeck, discardPile, Card.CARD_AREA_PLAYER_DECK )
 	end
 	
 	local cardToDraw = fromDeck[1]
@@ -629,8 +603,9 @@ function DrawCardFromDeck( fromDeck, toLocation, toIndex, discardPile, deckLocX,
 
 	table.remove( fromDeck, 1 )
 	
-	CreateCardVisuals( cardToDraw )
-	cardToDraw.prop:setLoc( deckLocX, deckLocY )
+	cardToDraw:CreateCardVisuals( mainLayer )
+	cardToDraw:setLoc( deckLocX, deckLocY )
+	cardToDraw:setCardArea( newCardArea )
 	
 	print("POST DRAW! num cards in deck = " .. #fromDeck)
 	
@@ -638,71 +613,15 @@ function DrawCardFromDeck( fromDeck, toLocation, toIndex, discardPile, deckLocX,
 end
 
 
-function CreateCardVisuals( card )
-	-- when we draw the card, we want to create the visual element to go along with it
-	-- this will be destroyed when the card is discarded from play
-	card.prop = MOAIProp2D.new()
-	if ( card.artName == nil ) then
-		print( "IVALID art name for card!" )
-	else
-		print( "Going to get the art for :" .. card.artName )
-	end
-	local cardGfx = g_cardDatabase:GetCardArt( card.artName )
-	card.prop:setDeck( cardGfx )
-	
-	-- put a text box on the card
-	local font =  MOAIFont.new ()
-	font:loadFromTTF ( "arialbd.ttf", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,.?! ", 12, 163 )
-	
-	local textbox = MOAITextBox.new ()
-	textbox:setFont ( font )
-	textbox:setColor( 0, 0, 0 )
-	textbox:setGlyphScale( 0.25 )
-	textbox:setAlignment ( MOAITextBox.LEFT_JUSTIFY, MOAITextBox.LEFT_JUSTIFY )
-	--textbox:setAlignment ( MOAITextBox.LEFT_JUSTIFY, MOAITextBox.TOP_JUSTIFY )
-	--textbox:setAlignment ( MOAITextBox.CENTER_JUSTIFY )
-	textbox:setYFlip ( true )
-	local x1 = g_cardDatabase.CARD_WIDTH*CARD_TEXTBOX_RECT_RATIO_X_1 - (g_cardDatabase.CARD_WIDTH/2)
-	local y1 = -(g_cardDatabase.CARD_HEIGHT*CARD_TEXTBOX_RECT_RATIO_Y_1 - (g_cardDatabase.CARD_HEIGHT/2))
-	local x2 = g_cardDatabase.CARD_WIDTH*CARD_TEXTBOX_RECT_RATIO_X_2 - (g_cardDatabase.CARD_WIDTH/2)
-	local y2 = -(g_cardDatabase.CARD_HEIGHT*CARD_TEXTBOX_RECT_RATIO_Y_2 - (g_cardDatabase.CARD_HEIGHT/2))
-	
-	-- HACK
-	y1 = 0
-	y2 = -30
-	
-	print( x1 )
-	print( y1 )
-	print( x2 )
-	print( y2 )
-	textbox:setRect ( x1, y1, x2, y2 )
-	
-	textbox:setLoc ( 0, 10 )	-- HACK
-	textbox:setString ( card.cardText )
-
-	-- attach the text box to the card prop so that they will move together
-	textbox:setParent( card.prop )
-		
-	card.textbox = textbox
-
-	-- set priorities for both the card prop and the text box	
-	card.prop:setPriority( 0 )
-	card.textbox:setPriority( 0 )	
-	
-	mainLayer:insertProp( card.prop )
-	mainLayer:insertProp( card.textbox )
-end
-
 -- attempt to discard the given card from the player's hand
 -- if the card is discarded return true, otherwise return false
 function AttemptDiscard( card )
-	if card.cardArea == CARD_AREA.HAND and card.resourceAmount > -1 then
+	if card.cardArea == Card.CARD_AREA_HAND and card.resourceAmount > -1 then
 		Discard( card, hand, true )
 		
 		currentResources = currentResources + card.resourceAmount		
 		if card.drawCards > 0 then
-			local card = DrawCardFromDeck( playerDeck, hand, 0, discard, PLAYER_DECK_LOCATION_X, PLAYER_DECK_LOCATION_Y ) 
-			card.cardArea = CARD_AREA.HAND
+			local card = DrawCardFromDeck( playerDeck, hand, 0, discard, Card.CARD_AREA_HAND, PLAYER_DECK_LOCATION_X, PLAYER_DECK_LOCATION_Y ) 
 		end
 		
 		ArrangeHand()
@@ -715,7 +634,10 @@ end
 -- attempt to deploy the given card from the player's hand to the deploy zone
 -- if the card is deployed return true, otherwise return false
 function AttemptDeployment( card )
-	if card.cardArea == CARD_AREA.HAND and card.resourceCost <= currentResources then
+	
+	local cardArea = card:getCardArea()
+
+	if cardArea == Card.CARD_AREA_HAND and card.resourceCost <= currentResources then
 
 		currentResources = currentResources - card.resourceCost
 		
@@ -725,7 +647,7 @@ function AttemptDeployment( card )
 		ArrangeHand()
 		return true
 	
-	elseif card.cardArea == CARD_AREA.CAPTURE then
+	elseif cardArea == Card.CARD_AREA_CAPTURE then
 		local cardFound, captureZoneIndex, cardIndex = FindCardInCaptureZone( card )
 		assert(cardFound)
 		Deploy( card, captureZones[captureZoneIndex].cardTable, false )
@@ -746,8 +668,9 @@ function AttemptMoveToCaptureZone( captureZone, card )
 	end
 	
 	-- only allow moves from the deploy or capture zones
-	if  card.cardArea == CARD_AREA.DEPLOY or
-		card.cardArea == CARD_AREA.CAPTURE then
+	local cardArea = card:getCardArea()
+	if  cardArea == Card.CARD_AREA_DEPLOY or
+		cardArea == Card.CARD_AREA_CAPTURE then
 		
 		MoveToCaptureZone( captureZone, card )
 		
@@ -781,7 +704,7 @@ function Discard( card, fromTable, compressTable )
 	-- spin the card as it goes to the discard pile!
 	card.prop:moveRot( 360, 0.5, MOAIEaseType.SMOOTH )
 		
-	card.cardArea = CARD_AREA.DISCARD
+	card:setCardArea( Card.CARD_AREA_DISCARD )
 end
 
 -- callback that is used to destroy a card's visuals after it is discarded
@@ -807,33 +730,35 @@ function Deploy( card, fromTable, applyDeployedFlag )
 	table.insert(deployZone, card)
 	table.remove(fromTable, cardIndex)
 	
-	card.cardArea = CARD_AREA.DEPLOY
+	card:setCardArea( Card.CARD_AREA_DEPLOY )
 end
 
 -------------------------------------------------------------
 function MoveToCaptureZone( captureZone, card )
 	print("Moving" .. card.artName .. " to the capture zone!")
 	
-	if card.cardArea == CARD_AREA.CAPTURE then
+	local cardArea = card:getCardArea()
+	
+	if cardArea == Card.CARD_AREA_CAPTURE then
 		local cardFound, captureZoneIndex, cardIndex = FindCardInCaptureZone( card )
 		assert(cardFound)
 		
 		table.insert( captureZone.cardTable, card )
 		table.remove( captureZones[captureZoneIndex].cardTable, cardIndex)
 		
-	elseif card.cardArea == CARD_AREA.DEPLOY then
+	elseif cardArea == Card.CARD_AREA_DEPLOY then
 		local cardIndex = GetCardIndexInTable( card, deployZone )	
 		table.insert( captureZone.cardTable, card )
 		table.remove( deployZone, cardIndex )
 	end
 	
-	card.cardArea = CARD_AREA.CAPTURE
+	card:setCardArea( Card.CARD_AREA_CAPTURE )
 end
 
 
 -------------------------------------------------------------
 function FindCardInCaptureZone( card )
-	assert(card.cardArea == CARD_AREA.CAPTURE, "Card is in the wrong area!")
+	assert(card:getCardArea() == Card.CARD_AREA_CAPTURE, "Card is in the wrong area!")
 	
 	local cardFound = false
 	local captureZoneIndex = 0
@@ -861,7 +786,7 @@ function FindCardIndex( card )
 	
 	for k, v in ipairs(playerDeck) do
 		if card == v then
-			assert(v.cardArea == CARD_AREA.PLAYER_DECK, "Card is in the wrong area!")
+			assert(v:getCardArea() == Card.CARD_AREA_PLAYER_DECK, "Card is in the wrong area!")
 			assert(not cardFound, "Card found in multiple places!")
 			cardFound = true
 			cardIndex = k
@@ -870,7 +795,7 @@ function FindCardIndex( card )
 	
 	for k, v in ipairs(hand) do
 		if card == v then
-			assert(v.cardArea == CARD_AREA.HAND, "Card is in the wrong area!")
+			assert(v:getCardArea() == Card.CARD_AREA_HAND, "Card is in the wrong area!")
 			assert(not cardFound, "Card found in multiple places!")
 			cardFound = true
 			cardIndex = k
@@ -879,7 +804,7 @@ function FindCardIndex( card )
 
 	for k, v in ipairs(globalDeck) do
 		if card == v then
-			assert(v.cardArea == CARD_AREA.GLOBAL_DECK, "Card is in the wrong area!")
+			assert(v:getCardArea() == Card.CARD_AREA_GLOBAL_DECK, "Card is in the wrong area!")
 			assert(not cardFound, "Card found in multiple places!")
 			cardFound = true
 			cardIndex = k
@@ -889,7 +814,7 @@ function FindCardIndex( card )
 	for i=1, NUM_CAPTURE_CARDS do
 		for k, v in ipairs(captureZones[i].cardTable) do
 			if card == v then
-				assert(v.cardArea == CARD_AREA.CAPTURE, "Card is in the wrong area!")
+				assert(v:getCardArea() == Card.CARD_AREA_CAPTURE, "Card is in the wrong area!")
 				assert(not cardFound, "Card found in multiple places!")
 				cardFound = true
 				cardIndex = k
@@ -915,7 +840,7 @@ function ShuffleDiscardIntoDeck( fromDeck, discardPile, newCardArea )
 	-- move all discarded cards into the deck
 	for k, v in ipairs(discardPile) do
 		table.insert( fromDeck, v )
-		v.cardArea = newCardArea
+		v:setCardArea( newCardArea )
 	end
 	
 	-- now go through and remove all of the card references from the discard pile
